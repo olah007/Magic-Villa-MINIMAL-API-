@@ -6,6 +6,8 @@ using MagicVilla_CouponAPI.Repository.IRepository;
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MagicVilla_CouponAPI.Endpoints
 {
@@ -14,11 +16,20 @@ namespace MagicVilla_CouponAPI.Endpoints
         public static void ConfigureCouponEndpoints(this WebApplication app)
         {
             app.MapGet("/api/coupon", GetAllCoupon)
-                .WithName("GetCoupons").Produces<APIResponse>(200).RequireAuthorization();
+                .WithName("GetCoupons").Produces<APIResponse>(200);
+                //.RequireAuthorization("AdminOnly");
 
 
             app.MapGet("/api/coupon/{id:int}", GetCoupon)
-                .WithName("GetCoupon").Produces<APIResponse>(200);
+                .WithName("GetCoupon").Produces<APIResponse>(200)
+                .AddEndpointFilter(async (context, next) =>
+                {
+                    var id = context.GetArgument<int>(0);
+                    if(id == 0)
+                        return Results.BadRequest("Cannot have 0 in id");
+
+                    return await next(context);
+                });
 
 
             app.MapPost("/api/coupon", CreateCoupon)
@@ -44,6 +55,7 @@ namespace MagicVilla_CouponAPI.Endpoints
             return Results.Ok(response);
         }
 
+        //[Authorize]
         private async static Task<IResult> DeleteCoupon(int id, ICouponRepository _couponRepo)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
@@ -74,6 +86,7 @@ namespace MagicVilla_CouponAPI.Endpoints
             return Results.Ok(response);
         }
 
+        //[Authorize]
         private async static Task<IResult> CreateCoupon([FromBody] CouponCreateDTO coupon_C_DTO, ICouponRepository _couponRepo, IMapper _mapper, IValidator<CouponCreateDTO> _validation)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
@@ -106,6 +119,7 @@ namespace MagicVilla_CouponAPI.Endpoints
             //return Results.Ok(coupon);
         }
 
+        //[Authorize]
         private async static Task<IResult> UpdateCoupon([FromBody] CouponUpdateDTO coupon_U_DTO, ICouponRepository _couponRepo, IMapper _mapper, IValidator<CouponUpdateDTO> _validation)
         {
             APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };

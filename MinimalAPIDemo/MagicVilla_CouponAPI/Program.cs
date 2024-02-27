@@ -77,7 +77,10 @@ builder.Services.AddAuthentication(x =>
         ValidateAudience = false,
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
+});
 
 var app = builder.Build();
 
